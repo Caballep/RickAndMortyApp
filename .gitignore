@@ -1,0 +1,22 @@
+*.iml
+.gradle
+.DS_Store
+.cxx
+
+# Build Artifacts
+/build
+/captures
+.externalNativeBuild
+
+# Local Configuration
+/local.properties
+
+# Android Studio / IntelliJ Files
+.idea/
+# You can remove all the specific files/folders underneath .idea if you use the line above:
+# /.idea/caches
+# /.idea/libraries
+# /.idea/modules.xml
+# /.idea/workspace.xml
+# /.idea/navEditor.xml
+# /.idea/assetWizardSettings.xml
