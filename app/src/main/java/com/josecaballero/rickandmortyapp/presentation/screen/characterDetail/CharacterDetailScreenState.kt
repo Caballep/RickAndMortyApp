@@ -17,7 +17,9 @@ data class CharacterDetailScreenState(
         val status: String,
         val species: String,
         val origin: String,
-        val imageUrl: String
+        val imageUrl: String,
+        val type: String,
+        val created: String
     ) {
         companion object Companion {
             fun fromModel(model: CharacterModel): DetailCharacter {
@@ -27,7 +29,9 @@ data class CharacterDetailScreenState(
                         status = status,
                         species = species,
                         origin = origin,
-                        imageUrl = imageUrl
+                        imageUrl = imageUrl,
+                        type = type,
+                        created = created
                     )
                 }
             }

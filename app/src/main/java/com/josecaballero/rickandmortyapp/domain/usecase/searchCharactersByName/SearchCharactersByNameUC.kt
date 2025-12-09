@@ -4,6 +4,7 @@ import com.josecaballero.rickandmortyapp.data.repo.CharacterRepo
 import com.josecaballero.rickandmortyapp.domain.model.CharacterModel
 import com.josecaballero.rickandmortyapp.domain.util.FailureType
 import com.josecaballero.rickandmortyapp.domain.util.ThrowableMapper
+import com.josecaballero.rickandmortyapp.domain.util.TimeFormatter
 import javax.inject.Inject
 
 class SearchCharactersByNameUC @Inject constructor(
@@ -21,13 +22,16 @@ class SearchCharactersByNameUC @Inject constructor(
             onSuccess = { listCharacterModel ->
                 val models = listCharacterModel.map { data ->
                     data.run {
+                        val created = TimeFormatter.formatToStandardDate(created)
                         CharacterModel(
                             id = id,
                             name = name,
                             status = status,
                             species = species,
                             origin = origin,
-                            imageUrl = imageUrl
+                            imageUrl = imageUrl,
+                            type = type,
+                            created = created
                         )
                     }
                 }

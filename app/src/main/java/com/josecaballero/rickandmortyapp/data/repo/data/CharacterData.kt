@@ -6,5 +6,7 @@ data class CharacterData(
     val status: String,
     val species: String,
     val origin: String,
-    val imageUrl: String
+    val imageUrl: String,
+    val type: String,
+    val created: String
 )

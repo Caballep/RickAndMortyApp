@@ -14,8 +14,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.josecaballero.rickandmortyapp.domain.util.TimeFormatter // Placeholder Import
 
 @Composable
 fun CharacterDetailScreen(
@@ -62,19 +63,31 @@ private fun CharacterDetailContent(character: CharacterDetailScreenState.DetailC
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        AsyncImage(
-            model = character.imageUrl,
-            contentDescription = "${character.name} detail image",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth(0.75f)
-                .height(250.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.Gray)
-        )
+        CharacterImage(character)
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        CharacterDetails(character)
+    }
+}
+
+@Composable
+private fun CharacterImage(character: CharacterDetailScreenState.DetailCharacter) {
+    AsyncImage(
+        model = character.imageUrl,
+        contentDescription = "${character.name} detail image",
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.Gray)
+    )
+}
+
+@Composable
+private fun CharacterDetails(character: CharacterDetailScreenState.DetailCharacter) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = character.name,
             style = MaterialTheme.typography.headlineMedium,
@@ -92,11 +105,27 @@ private fun CharacterDetailContent(character: CharacterDetailScreenState.DetailC
             style = MaterialTheme.typography.bodyLarge
         )
 
+        if (character.type.isNotEmpty()) {
+            Text(
+                text = "Type: ${character.type}",
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = "Origin: ${character.origin}",
             style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        val formattedDate = TimeFormatter.formatToStandardDate(character.created)
+        Text(
+            text = "Created: $formattedDate",
+            style = MaterialTheme.typography.bodySmall,
             color = Color.Gray
         )
     }

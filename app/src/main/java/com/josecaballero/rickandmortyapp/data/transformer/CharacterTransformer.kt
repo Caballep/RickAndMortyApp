@@ -14,7 +14,9 @@ class CharacterTransformer {
                     status = status,
                     species = species,
                     origin = origin,
-                    imageUrl = imageUrl
+                    imageUrl = imageUrl,
+                    type = type,
+                    created = created
                 )
             }
         }
@@ -27,7 +29,9 @@ class CharacterTransformer {
                     status = status,
                     species = species,
                     origin = origin.name,
-                    imageUrl = image
+                    imageUrl = image,
+                    type = type,
+                    created = created
                 )
             }
         }

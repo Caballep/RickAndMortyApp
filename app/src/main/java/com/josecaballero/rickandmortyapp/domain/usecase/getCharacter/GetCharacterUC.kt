@@ -4,6 +4,7 @@ import com.josecaballero.rickandmortyapp.data.repo.CharacterRepo
 import com.josecaballero.rickandmortyapp.domain.model.CharacterModel
 import com.josecaballero.rickandmortyapp.domain.util.FailureType
 import com.josecaballero.rickandmortyapp.domain.util.ThrowableMapper
+import com.josecaballero.rickandmortyapp.domain.util.TimeFormatter
 import javax.inject.Inject
 
 class GetCharacterUC @Inject constructor(
@@ -17,14 +18,16 @@ class GetCharacterUC @Inject constructor(
                 if (data == null) {
                     return GetCharacterResult.Failure(FailureType.NotFound)
                 }
-
+                val created = TimeFormatter.formatToStandardDate(data.created)
                 val model = CharacterModel(
                     id = data.id,
                     name = data.name,
                     status = data.status,
                     species = data.species,
                     origin = data.origin,
-                    imageUrl = data.imageUrl
+                    imageUrl = data.imageUrl,
+                    type = data.type,
+                    created = created
                 )
 
                 GetCharacterResult.Success(model)
