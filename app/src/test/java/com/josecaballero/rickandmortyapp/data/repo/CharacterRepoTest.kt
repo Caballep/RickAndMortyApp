@@ -26,21 +26,33 @@ class CharacterRepoImplTest {
 
     private val dispatcher = StandardTestDispatcher()
 
+    private val name = "Rick"
+    private val MOCK_TYPE = "Scientist"
+    private val MOCK_CREATED = "2023-10-27T10:00:00.000Z"
+
     @Before
     fun setup() {
         Dispatchers.setMain(dispatcher)
         repo = CharacterRepoImpl(api, dao)
     }
 
-    private val name = "Rick"
-
     private val location =
         CharactersResponse.Character.LocationInfo("Earth", "url/earth")
 
     private val apiResults = listOf(
         CharactersResponse.Character(
-            1, "Rick Sanchez", "Alive", "Human", "", "Male",
-            location, location, "url1", emptyList(), "", ""
+            id = 1,
+            name = "Rick Sanchez",
+            status = "Alive",
+            species = "Human",
+            type = MOCK_TYPE,
+            gender = "Male",
+            origin = location,
+            location = location,
+            image = "url1",
+            episode = emptyList(),
+            url = "",
+            created = MOCK_CREATED
         )
     )
 
@@ -49,11 +61,25 @@ class CharacterRepoImplTest {
     )
 
     private val entity = CharacterEntity(
-        1, "Rick Sanchez", "Human", "Alive", "Earth", "url1"
+        id = 1,
+        name = "Rick Sanchez",
+        status = "Alive",
+        species = "Human",
+        origin = "Earth",
+        imageUrl = "url1",
+        type = MOCK_TYPE,
+        created = MOCK_CREATED
     )
 
     private val data = CharacterData(
-        1, "Rick Sanchez", "Human", "Alive", "Earth", "url1"
+        id = 1,
+        name = "Rick Sanchez",
+        status = "Alive",
+        species = "Human",
+        origin = "Earth",
+        imageUrl = "url1",
+        type = MOCK_TYPE,
+        created = MOCK_CREATED
     )
 
     @Test
@@ -65,6 +91,7 @@ class CharacterRepoImplTest {
 
         assertTrue(result.isSuccess)
         assertEquals(1, result.getOrNull()!!.size)
+        assertEquals(data, result.getOrNull()!!.first())
     }
 
     @Test
