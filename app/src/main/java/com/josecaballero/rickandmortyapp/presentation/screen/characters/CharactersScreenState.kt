@@ -4,14 +4,14 @@ import com.josecaballero.rickandmortyapp.domain.model.CharacterModel
 
 data class CharactersScreenState(
     val searchTerm: String = "",
-    val status: CharactersState = CharactersState.Initial,
+    val status: CharactersStatus = CharactersStatus.Initial,
     val displayMessage: String = ""
 ) {
-    sealed interface CharactersState {
-        data object Initial : CharactersState
-        data object Loading : CharactersState
-        data object Empty : CharactersState
-        data class Success(val characters: List<Character>) : CharactersState
+    sealed interface CharactersStatus {
+        data object Initial : CharactersStatus
+        data object Loading : CharactersStatus
+        data object Empty : CharactersStatus
+        data class Success(val characters: List<Character>) : CharactersStatus
 
         data class Character(
             val id: Int,

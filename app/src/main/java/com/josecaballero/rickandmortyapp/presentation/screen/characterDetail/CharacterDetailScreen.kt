@@ -19,9 +19,9 @@ import coil.compose.AsyncImage
 
 @Composable
 fun CharacterDetailScreen(
-    characterDetailVM: CharacterDetailVM = hiltViewModel()
+    characterDetailScreenVM: CharacterDetailScreenVM = hiltViewModel()
 ) {
-    val uiState by characterDetailVM.uiState.collectAsState()
+    val uiState by characterDetailScreenVM.uiState.collectAsState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize()
@@ -32,65 +32,72 @@ fun CharacterDetailScreen(
                 .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
-            when {
-                uiState.isLoading -> {
+            when (val currentStatus = uiState.status) {
+
+                CharacterDetailScreenState.CharacterDetailStatus.Loading -> {
                     CircularProgressIndicator()
                 }
-                uiState.error != null -> {
+
+                is CharacterDetailScreenState.CharacterDetailStatus.Error -> {
                     Text(
-                        text = uiState.error ?: "Unknown error",
+                        text = currentStatus.message,
                         color = Color.Red,
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
-                uiState.character != null -> {
-                    val character = uiState.character!!
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        AsyncImage(
-                            model = character.imageUrl,
-                            contentDescription = "${character.name} detail image",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxWidth(0.75f)
-                                .height(250.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color.Gray)
-                        )
 
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Text(
-                            text = character.name,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "Status: ${character.status}",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            text = "Species: ${character.species}",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "Origin: ${character.origin}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray
-                        )
-                    }
+                is CharacterDetailScreenState.CharacterDetailStatus.Success -> {
+                    CharacterDetailContent(character = currentStatus.character)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun CharacterDetailContent(character: CharacterDetailScreenState.DetailCharacter) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AsyncImage(
+            model = character.imageUrl,
+            contentDescription = "${character.name} detail image",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth(0.75f)
+                .height(250.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.Gray)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = character.name,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Status: ${character.status}",
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Text(
+            text = "Species: ${character.species}",
+            style = MaterialTheme.typography.bodyLarge
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Origin: ${character.origin}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
     }
 }

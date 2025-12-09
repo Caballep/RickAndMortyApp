@@ -42,7 +42,7 @@ import com.josecaballero.rickandmortyapp.presentation.shared.MessageDialog
 
 @Composable
 fun CharactersScreen(
-    viewModel: CharactersVM = hiltViewModel(),
+    viewModel: CharactersScreenVM = hiltViewModel(),
     onCharacterId: (Int) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -82,7 +82,7 @@ fun CharactersScreen(
             )
 
             when (val currentStatus = state.status) {
-                CharactersScreenState.CharactersState.Initial -> {
+                CharactersScreenState.CharactersStatus.Initial -> {
                     Text(
                         text = "Start searching by typing a character's name above.",
                         textAlign = TextAlign.Center,
@@ -90,11 +90,11 @@ fun CharactersScreen(
                     )
                 }
 
-                CharactersScreenState.CharactersState.Loading -> {
+                CharactersScreenState.CharactersStatus.Loading -> {
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
                 }
 
-                CharactersScreenState.CharactersState.Empty -> {
+                CharactersScreenState.CharactersStatus.Empty -> {
                     Text(
                         text = "No characters were found.",
                         textAlign = TextAlign.Center,
@@ -102,7 +102,7 @@ fun CharactersScreen(
                     )
                 }
 
-                is CharactersScreenState.CharactersState.Success -> {
+                is CharactersScreenState.CharactersStatus.Success -> {
                     CharacterGrid(
                         characters = currentStatus.characters,
                         onCharacterClick = onCharacterId
@@ -141,7 +141,7 @@ fun SearchInput(
 
 @Composable
 fun CharacterGrid(
-    characters: List<CharactersScreenState.CharactersState.Character>,
+    characters: List<CharactersScreenState.CharactersStatus.Character>,
     onCharacterClick: (Int) -> Unit
 ) {
     LazyVerticalGrid(
@@ -165,7 +165,7 @@ fun CharacterGrid(
 
 @Composable
 fun CharacterCard(
-    character: CharactersScreenState.CharactersState.Character,
+    character: CharactersScreenState.CharactersStatus.Character,
     onCharacterClick: () -> Unit
 ) {
     Card(

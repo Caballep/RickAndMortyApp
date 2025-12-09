@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class CharactersVM @Inject constructor(
+class CharactersScreenVM @Inject constructor(
     private val searchCharactersByNameUC: SearchCharactersByNameUC
 ) : ViewModel() {
 
@@ -40,7 +40,7 @@ class CharactersVM @Inject constructor(
         fetchJob = viewModelScope.launch {
             _uiState.update {
                 it.copy(
-                    status = CharactersScreenState.CharactersState.Loading,
+                    status = CharactersScreenState.CharactersStatus.Loading,
                     displayMessage = ""
                 )
             }
@@ -49,15 +49,15 @@ class CharactersVM @Inject constructor(
 
                 is SearchCharactersByNameResult.Success -> {
                     val characters = result.charactersModel.map {
-                        CharactersScreenState.CharactersState.Character.fromModel(it)
+                        CharactersScreenState.CharactersStatus.Character.fromModel(it)
                     }
 
                     _uiState.update {
                         it.copy(
                             status = if (characters.isEmpty()) {
-                                CharactersScreenState.CharactersState.Empty
+                                CharactersScreenState.CharactersStatus.Empty
                             } else {
-                                CharactersScreenState.CharactersState.Success(characters)
+                                CharactersScreenState.CharactersStatus.Success(characters)
                             },
                             displayMessage = ""
                         )
@@ -71,7 +71,7 @@ class CharactersVM @Inject constructor(
                         _uiEvent.emit("Something went wrong.")
                         _uiState.update {
                             it.copy(
-                                status = CharactersScreenState.CharactersState.Empty,
+                                status = CharactersScreenState.CharactersStatus.Empty,
                             )
                         }
                     }
