@@ -4,4 +4,5 @@ import com.josecaballero.rickandmortyapp.data.repo.data.CharacterData
 
 interface CharacterRepo {
     suspend fun getCharactersByName(name: String): Result<List<CharacterData>>
+    suspend fun getCharactersById(id: Int): Result<CharacterData?>
 }

@@ -1,26 +1,23 @@
-package com.josecaballero.rickandmortyapp.presentation.screen
+package com.josecaballero.rickandmortyapp.presentation.screen.characterDetail
 
 import com.josecaballero.rickandmortyapp.domain.model.CharacterModel
 
-data class CharacterState(
-    val characters: List<Character> = emptyList(),
-    val searchTerm: String = "Rick",
+data class CharacterDetailState(
+    val character: Character? = null,
     val isLoading: Boolean = false,
     val error: String? = null
 ) {
     data class Character(
-        val id: Int,
         val name: String,
         val status: String,
         val species: String,
         val origin: String,
         val imageUrl: String
     ) {
-        companion object {
+        companion object Companion {
             fun fromModel(model: CharacterModel): Character {
                 return model.run {
                     Character(
-                        id = id,
                         name = name,
                         status = status,
                         species = species,

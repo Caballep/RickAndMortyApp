@@ -12,6 +12,9 @@ interface CharacterDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCharacters(characters: List<CharacterEntity>)
 
-    @Query("SELECT * FROM characters WHERE name LIKE '%' || :searchQuery || '%'")
-    suspend fun getCharactersByName(searchQuery: String): List<CharacterEntity>
+    @Query("SELECT * FROM characters WHERE name LIKE '%' || :name || '%'")
+    suspend fun getCharactersByName(name: String): List<CharacterEntity>
+
+    @Query("SELECT * FROM characters WHERE id = :id")
+    suspend fun getCharacterById(id: Int): CharacterEntity?
 }

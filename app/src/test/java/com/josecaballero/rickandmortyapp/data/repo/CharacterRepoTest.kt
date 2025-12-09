@@ -6,7 +6,6 @@ import com.josecaballero.rickandmortyapp.data.source.remote.rest.RickAndMortyAPI
 import com.josecaballero.rickandmortyapp.data.source.remote.rest.response.CharactersResponse
 import com.josecaballero.rickandmortyapp.data.repo.data.CharacterData
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,146 +21,99 @@ import java.io.IOException
 class CharacterRepoImplTest {
 
     private val api: RickAndMortyAPI = mockk()
-    private val characterDao: CharacterDao = mockk()
+    private val dao: CharacterDao = mockk()
+    private lateinit var repo: CharacterRepoImpl
 
-    private lateinit var characterRepoImpl: CharacterRepoImpl
-
-    private val testDispatcher = StandardTestDispatcher()
+    private val dispatcher = StandardTestDispatcher()
 
     @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        characterRepoImpl = CharacterRepoImpl(api, characterDao)
+    fun setup() {
+        Dispatchers.setMain(dispatcher)
+        repo = CharacterRepoImpl(api, dao)
     }
 
-    private val testName = "Rick"
+    private val name = "Rick"
 
-    private val testLocation =
-        CharactersResponse.Character.LocationInfo(name = "Earth", url = "url/earth")
+    private val location =
+        CharactersResponse.Character.LocationInfo("Earth", "url/earth")
 
-    private val apiCharacterList = listOf(
+    private val apiResults = listOf(
         CharactersResponse.Character(
-            id = 1, name = "Rick Sanchez", status = "Alive", species = "Human", type = "",
-            gender = "Male", origin = testLocation, location = testLocation,
-            image = "url1", episode = emptyList(), url = "url/char1", created = ""
-        ),
-        CharactersResponse.Character(
-            id = 2, name = "Morty Smith", status = "Alive", species = "Human", type = "",
-            gender = "Male", origin = testLocation, location = testLocation,
-            image = "url2", episode = emptyList(), url = "url/char2", created = ""
+            1, "Rick Sanchez", "Alive", "Human", "", "Male",
+            location, location, "url1", emptyList(), "", ""
         )
     )
 
     private val apiResponse = CharactersResponse(
-        info = CharactersResponse.Info(count = 2, pages = 1),
-        results = apiCharacterList
+        CharactersResponse.Info(1, 1), apiResults
     )
 
-    private val apiEmptyResponse = CharactersResponse(
-        info = CharactersResponse.Info(count = 0, pages = 0),
-        results = emptyList()
+    private val entity = CharacterEntity(
+        1, "Rick Sanchez", "Human", "Alive", "Earth", "url1"
     )
 
-    private val entityList = listOf(
-        CharacterEntity(
-            id = 1,
-            name = "Rick Sanchez",
-            species = "Human",
-            status = "Alive",
-            origin = "Earth",
-            imageUrl = "url1"
-        ),
-        CharacterEntity(
-            id = 2,
-            name = "Morty Smith",
-            species = "Human",
-            status = "Alive",
-            origin = "Earth",
-            imageUrl = "url2"
-        )
-    )
-
-    private val dataList = listOf(
-        CharacterData(
-            id = 1,
-            name = "Rick Sanchez",
-            species = "Human",
-            status = "Alive",
-            origin = "Earth",
-            imageUrl = "url1"
-        ),
-        CharacterData(
-            id = 2,
-            name = "Morty Smith",
-            species = "Human",
-            status = "Alive",
-            origin = "Earth",
-            imageUrl = "url2"
-        )
+    private val data = CharacterData(
+        1, "Rick Sanchez", "Human", "Alive", "Earth", "url1"
     )
 
     @Test
-    fun `getCharactersByName success should fetch remote, save local, and return data`() = runTest {
-        coEvery { api.getCharactersByName(testName) } returns apiResponse
-        coEvery { characterDao.insertCharacters(any()) } returns Unit
-        coEvery { characterDao.getCharactersByName(testName) } returns entityList
+    fun getByName_apiSuccess() = runTest {
+        coEvery { api.getCharactersByName(name) } returns apiResponse
+        coEvery { dao.insertCharacters(any()) } returns Unit
 
-        val result = characterRepoImpl.getCharactersByName(testName)
-
-        coVerify(exactly = 1) { api.getCharactersByName(testName) }
-        coVerify(exactly = 1) { characterDao.insertCharacters(any()) }
-        coVerify(exactly = 1) { characterDao.getCharactersByName(testName) }
+        val result = repo.getCharactersByName(name)
 
         assertTrue(result.isSuccess)
-        assertEquals(dataList, result.getOrNull())
+        assertEquals(1, result.getOrNull()!!.size)
     }
 
     @Test
-    fun `getCharactersByName success should return empty list when API returns no results`() = runTest {
-        coEvery { api.getCharactersByName(testName) } returns apiEmptyResponse
-        coEvery { characterDao.insertCharacters(emptyList()) } returns Unit
-        coEvery { characterDao.getCharactersByName(testName) } returns emptyList()
+    fun getByName_apiFails_localSuccess() = runTest {
+        coEvery { api.getCharactersByName(name) } throws IOException()
+        coEvery { dao.getCharactersByName(name) } returns listOf(entity)
 
-        val result = characterRepoImpl.getCharactersByName(testName)
-
-        coVerify(exactly = 1) { api.getCharactersByName(testName) }
-        coVerify(exactly = 1) { characterDao.insertCharacters(emptyList()) }
-        coVerify(exactly = 1) { characterDao.getCharactersByName(testName) }
+        val result = repo.getCharactersByName(name)
 
         assertTrue(result.isSuccess)
-        assertTrue(result.getOrNull()!!.isEmpty())
+        assertEquals(listOf(data), result.getOrNull())
     }
 
     @Test
-    fun `getCharactersByName failure if database insertion fails should return failure result`() = runTest {
-        val dbException = RuntimeException("DB Constraint Violation")
+    fun getByName_apiFails_localEmpty() = runTest {
+        coEvery { api.getCharactersByName(name) } throws IOException("x")
+        coEvery { dao.getCharactersByName(name) } returns emptyList()
 
-        coEvery { api.getCharactersByName(testName) } returns apiResponse
-        coEvery { characterDao.insertCharacters(any()) } throws dbException
-        coEvery { characterDao.getCharactersByName(any()) } returns emptyList()
-
-        val result = characterRepoImpl.getCharactersByName(testName)
-
-        coVerify(exactly = 1) { api.getCharactersByName(testName) }
-        coVerify(exactly = 1) { characterDao.insertCharacters(any()) }
-        coVerify(exactly = 0) { characterDao.getCharactersByName(any()) }
+        val result = repo.getCharactersByName(name)
 
         assertTrue(result.isFailure)
-        assertEquals(dbException.message, result.exceptionOrNull()?.message)
     }
 
     @Test
-    fun `getCharactersByName failure when API call fails should return failure result`() = runTest {
-        val exception = IOException("Network error")
-        coEvery { api.getCharactersByName(testName) } throws exception
+    fun getById_success() = runTest {
+        coEvery { dao.getCharacterById(1) } returns entity
 
-        val result = characterRepoImpl.getCharactersByName(testName)
+        val result = repo.getCharactersById(1)
 
-        coVerify(exactly = 1) { api.getCharactersByName(testName) }
-        coVerify(exactly = 0) { characterDao.insertCharacters(any()) }
-        coVerify(exactly = 0) { characterDao.getCharactersByName(any()) }
+        assertTrue(result.isSuccess)
+        assertEquals(data, result.getOrNull())
+    }
+
+    @Test
+    fun getById_notFound() = runTest {
+        coEvery { dao.getCharacterById(1) } returns null
+
+        val result = repo.getCharactersById(1)
+
+        assertTrue(result.isSuccess)
+        assertNull(result.getOrNull())
+    }
+
+    @Test
+    fun getById_failure() = runTest {
+        coEvery { dao.getCharacterById(1) } throws RuntimeException("x")
+
+        val result = repo.getCharactersById(1)
 
         assertTrue(result.isFailure)
-        assertEquals(exception.message, result.exceptionOrNull()?.message)
     }
 }

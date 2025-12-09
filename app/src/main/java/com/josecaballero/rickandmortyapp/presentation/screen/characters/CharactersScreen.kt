@@ -1,4 +1,4 @@
-package com.josecaballero.characters.presentation
+package com.josecaballero.rickandmortyapp.presentation.screen.characters
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +26,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,20 +36,24 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.josecaballero.rickandmortyapp.presentation.screen.CharacterState
-import com.josecaballero.rickandmortyapp.presentation.screen.CharacterVM
+import com.josecaballero.rickandmortyapp.presentation.shared.MessageDialog
 
 @Composable
 fun CharactersScreen(
-    viewModel: CharacterVM = viewModel()
+    viewModel: CharactersVM = hiltViewModel(),
+    onCharacterId: (Int) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
+    var showMessageDialog by remember { mutableStateOf(false) }
+    var dialogMessage by remember { mutableStateOf("") }
+
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { message ->
-            println("UI EVENT TRIGGERED: $message")
+            dialogMessage = message
+            showMessageDialog = true
         }
     }
 
@@ -66,29 +73,52 @@ fun CharactersScreen(
                 .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
-            when {
-                state.isLoading -> {
-                    CircularProgressIndicator(Modifier.align(Alignment.Center))
-                }
 
-                state.error != null -> {
+            Text(
+                text = state.displayMessage,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(24.dp)
+            )
+
+            when (val currentStatus = state.status) {
+                CharactersScreenState.CharactersState.Initial -> {
                     Text(
-                        text = state.error!!,
-                        color = MaterialTheme.colorScheme.error,
+                        text = "Start searching by typing a character's name above.",
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(24.dp)
                     )
                 }
 
-                state.characters.isEmpty() && !state.isLoading -> {
-                    Text(text = "No characters found for '${state.searchTerm}'")
+                CharactersScreenState.CharactersState.Loading -> {
+                    CircularProgressIndicator(Modifier.align(Alignment.Center))
                 }
 
-                else -> {
-                    CharacterGrid(characters = state.characters)
+                CharactersScreenState.CharactersState.Empty -> {
+                    Text(
+                        text = "No characters were found.",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(24.dp)
+                    )
+                }
+
+                is CharactersScreenState.CharactersState.Success -> {
+                    CharacterGrid(
+                        characters = currentStatus.characters,
+                        onCharacterClick = onCharacterId
+                    )
                 }
             }
         }
+    }
+
+    if (showMessageDialog) {
+        MessageDialog(
+            message = dialogMessage,
+            onDismissRequest = {
+                showMessageDialog = false
+            }
+        )
     }
 }
 
@@ -110,7 +140,10 @@ fun SearchInput(
 }
 
 @Composable
-fun CharacterGrid(characters: List<CharacterState.Character>) {
+fun CharacterGrid(
+    characters: List<CharactersScreenState.CharactersState.Character>,
+    onCharacterClick: (Int) -> Unit
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(16.dp),
@@ -119,19 +152,29 @@ fun CharacterGrid(characters: List<CharacterState.Character>) {
         modifier = Modifier.fillMaxSize()
     ) {
         items(characters, key = { it.id }) { character ->
-            CharacterCard(character = character)
+            CharacterCard(
+                character = character,
+                onCharacterClick = {
+                    val navData = character.id
+                    onCharacterClick(navData)
+                }
+            )
         }
     }
 }
 
 @Composable
-fun CharacterCard(character: CharacterState.Character) {
+fun CharacterCard(
+    character: CharactersScreenState.CharactersState.Character,
+    onCharacterClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f / 1.3f),
         shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(4.dp),
+        onClick = onCharacterClick
     ) {
         Column(
             modifier = Modifier
@@ -156,15 +199,6 @@ fun CharacterCard(character: CharacterState.Character) {
                 text = character.name,
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
-                maxLines = 1
-            )
-            Text(
-                text = "Status: ${character.status}",
-                style = MaterialTheme.typography.bodySmall
-            )
-            Text(
-                text = "Origin: ${character.origin}",
-                style = MaterialTheme.typography.bodySmall,
                 maxLines = 1
             )
         }
