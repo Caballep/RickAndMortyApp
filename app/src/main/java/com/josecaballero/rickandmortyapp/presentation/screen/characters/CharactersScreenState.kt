@@ -4,8 +4,7 @@ import com.josecaballero.rickandmortyapp.domain.model.CharacterModel
 
 data class CharactersScreenState(
     val searchTerm: String = "",
-    val status: CharactersStatus = CharactersStatus.Initial,
-    val displayMessage: String = ""
+    val status: CharactersStatus = CharactersStatus.Initial
 ) {
     sealed interface CharactersStatus {
         data object Initial : CharactersStatus

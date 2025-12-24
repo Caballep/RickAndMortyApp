@@ -3,7 +3,7 @@ package com.josecaballero.rickandmortyapp.presentation.screen.characterDetail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.josecaballero.rickandmortyapp.domain.usecase.getCharacter.GetCharacterResult
+import com.josecaballero.rickandmortyapp.domain.model.UCResult
 import com.josecaballero.rickandmortyapp.domain.usecase.getCharacter.GetCharacterUC
 import com.josecaballero.rickandmortyapp.presentation.navigation.CHARACTER_ID
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,7 +20,7 @@ class CharacterDetailScreenVM @Inject constructor(
     private val getCharacterDetailsUC: GetCharacterUC,
 ) : ViewModel() {
 
-    val characterId: Int = checkNotNull(savedStateHandle.get<Int>(CHARACTER_ID))
+    private val characterId: Int = checkNotNull(savedStateHandle.get<Int>(CHARACTER_ID))
 
     private val _uiState = MutableStateFlow(CharacterDetailScreenState())
     val uiState: StateFlow<CharacterDetailScreenState> = _uiState.asStateFlow()
@@ -39,28 +39,23 @@ class CharacterDetailScreenVM @Inject constructor(
             }
 
             when (val result = getCharacterDetailsUC(id)) {
-                is GetCharacterResult.Success -> {
-                    val character =
-                        CharacterDetailScreenState.DetailCharacter.fromModel(result.characterModel)
+                is UCResult.Success -> {
+                    val character = CharacterDetailScreenState.DetailCharacter.fromModel(result.data)
 
                     _uiState.update {
                         it.copy(
-                            status = CharacterDetailScreenState.CharacterDetailStatus.Success(
-                                character
-                            ),
+                            status = CharacterDetailScreenState.CharacterDetailStatus.Success(character),
                             displayMessage = ""
                         )
                     }
                 }
 
-                is GetCharacterResult.Failure -> {
+                is UCResult.Failure -> {
                     val errorMessage = "Failed to load character details."
 
                     _uiState.update {
                         it.copy(
-                            status = CharacterDetailScreenState.CharacterDetailStatus.Error(
-                                errorMessage
-                            ),
+                            status = CharacterDetailScreenState.CharacterDetailStatus.Error(errorMessage),
                             displayMessage = errorMessage
                         )
                     }

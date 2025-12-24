@@ -2,9 +2,9 @@ package com.josecaballero.rickandmortyapp.presentation
 
 import androidx.lifecycle.SavedStateHandle
 import com.josecaballero.rickandmortyapp.domain.model.CharacterModel
-import com.josecaballero.rickandmortyapp.domain.usecase.getCharacter.GetCharacterResult
+import com.josecaballero.rickandmortyapp.domain.model.UCResult
 import com.josecaballero.rickandmortyapp.domain.usecase.getCharacter.GetCharacterUC
-import com.josecaballero.rickandmortyapp.domain.util.FailureType
+import com.josecaballero.rickandmortyapp.domain.util.DomainFailure
 import com.josecaballero.rickandmortyapp.presentation.navigation.CHARACTER_ID
 import com.josecaballero.rickandmortyapp.presentation.screen.characterDetail.CharacterDetailScreenState.CharacterDetailStatus
 import com.josecaballero.rickandmortyapp.presentation.screen.characterDetail.CharacterDetailScreenVM
@@ -44,7 +44,6 @@ class CharacterDetailScreenVMTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-
         savedStateHandle = SavedStateHandle(mapOf(CHARACTER_ID to MOCK_CHARACTER_ID))
     }
 
@@ -55,17 +54,17 @@ class CharacterDetailScreenVMTest {
 
     @Test
     fun `initial state should be Loading`() = runTest {
-        coEvery { getCharacterDetailsUC(MOCK_CHARACTER_ID) } returns GetCharacterResult.Success(mockCharacterModel)
+        coEvery { getCharacterDetailsUC(MOCK_CHARACTER_ID) } returns UCResult.Success(mockCharacterModel)
 
         val viewModel = CharacterDetailScreenVM(savedStateHandle, getCharacterDetailsUC)
 
         assertEquals(CharacterDetailStatus.Loading, viewModel.uiState.value.status)
-        assertEquals(MOCK_CHARACTER_ID, viewModel.characterId)
     }
 
     @Test
     fun `fetchCharacterDetails success should update state to Success`() = runTest {
-        coEvery { getCharacterDetailsUC(MOCK_CHARACTER_ID) } returns GetCharacterResult.Success(mockCharacterModel)
+        coEvery { getCharacterDetailsUC(MOCK_CHARACTER_ID) } returns UCResult.Success(mockCharacterModel)
+        val expectedCharacterName = mockCharacterModel.copy().name
 
         val viewModel = CharacterDetailScreenVM(savedStateHandle, getCharacterDetailsUC)
 
@@ -75,14 +74,15 @@ class CharacterDetailScreenVMTest {
         assertTrue(state.status is CharacterDetailStatus.Success)
 
         val successStatus = state.status as CharacterDetailStatus.Success
-        assertEquals("Morty", successStatus.character.name)
 
+
+        assertEquals(expectedCharacterName, successStatus.character.name)
         assertEquals("", state.displayMessage)
     }
 
     @Test
     fun `fetchCharacterDetails failure should update state to Error`() = runTest {
-        coEvery { getCharacterDetailsUC(MOCK_CHARACTER_ID) } returns GetCharacterResult.Failure(FailureType.Error)
+        coEvery { getCharacterDetailsUC(MOCK_CHARACTER_ID) } returns UCResult.Failure(DomainFailure.Error)
 
         val viewModel = CharacterDetailScreenVM(savedStateHandle, getCharacterDetailsUC)
 

@@ -13,7 +13,7 @@ fun MessageDialog(
     AlertDialog(
         onDismissRequest = onDismissRequest,
         title = {
-            Text(text = "Alert")
+            Text(text = "Wabalabadubdub!")
         },
         text = {
             Text(text = message)

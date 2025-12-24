@@ -3,9 +3,8 @@ package com.josecaballero.rickandmortyapp.domain
 import com.josecaballero.rickandmortyapp.domain.usecase.getCharacter.GetCharacterUC
 import com.josecaballero.rickandmortyapp.data.repo.CharacterRepo
 import com.josecaballero.rickandmortyapp.data.repo.data.CharacterData
-import com.josecaballero.rickandmortyapp.domain.model.CharacterModel
-import com.josecaballero.rickandmortyapp.domain.usecase.getCharacter.GetCharacterResult
-import com.josecaballero.rickandmortyapp.domain.util.FailureType
+import com.josecaballero.rickandmortyapp.domain.model.UCResult
+import com.josecaballero.rickandmortyapp.domain.util.DomainFailure
 import com.josecaballero.rickandmortyapp.domain.util.ThrowableMapper
 import com.josecaballero.rickandmortyapp.domain.util.TimeFormatter
 import io.mockk.coEvery
@@ -67,10 +66,10 @@ class GetCharacterUCTest {
 
         val result = getCharacterUC(MOCK_CHARACTER_ID)
 
-        assertTrue(result is GetCharacterResult.Success)
-        val successResult = result as GetCharacterResult.Success
+        assertTrue(result is UCResult.Success)
+        val successResult = result as UCResult.Success
 
-        assertEquals(MOCK_CHARACTER_ID, successResult.characterModel.id)
+        assertEquals(MOCK_CHARACTER_ID, successResult.data.id)
         assertEquals(MOCK_FORMATTED_DATE, successResult.characterModel.created)
         assertEquals("Scientist", successResult.characterModel.type)
     }
@@ -82,23 +81,23 @@ class GetCharacterUCTest {
         val result = getCharacterUC(MOCK_CHARACTER_ID)
 
         assertTrue(result is GetCharacterResult.Failure)
-        assertEquals(FailureType.NotFound, (result as GetCharacterResult.Failure).failureType)
+        assertEquals(DomainFailure.NotFound, (result as GetCharacterResult.Failure).failureType)
     }
 
     @Test
     fun `invoke should return Failure when repository returns Throwable (e g IOException)`() = runTest {
         val exception = IOException("Network error")
-        val expectedFailureType = FailureType.NetworkError
+        val expectedDomainFailure = DomainFailure.NetworkError
 
         coEvery { repository.getCharactersById(MOCK_CHARACTER_ID) } returns Result.failure(exception)
 
         mockkObject(ThrowableMapper)
-        coEvery { ThrowableMapper.getFailureType(exception) } returns expectedFailureType
+        coEvery { ThrowableMapper.getFailureType(exception) } returns expectedDomainFailure
 
         val result = getCharacterUC(MOCK_CHARACTER_ID)
 
         assertTrue(result is GetCharacterResult.Failure)
-        assertEquals(expectedFailureType, (result as GetCharacterResult.Failure).failureType)
+        assertEquals(expectedDomainFailure, (result as GetCharacterResult.Failure).failureType)
 
         unmockkObject(ThrowableMapper)
     }

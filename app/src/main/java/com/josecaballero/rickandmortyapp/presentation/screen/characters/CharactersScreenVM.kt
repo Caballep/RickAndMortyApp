@@ -2,9 +2,8 @@ package com.josecaballero.rickandmortyapp.presentation.screen.characters
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.josecaballero.rickandmortyapp.domain.usecase.searchCharactersByName.SearchCharactersByNameResult
+import com.josecaballero.rickandmortyapp.domain.model.UCResult
 import com.josecaballero.rickandmortyapp.domain.usecase.searchCharactersByName.SearchCharactersByNameUC
-import com.josecaballero.rickandmortyapp.domain.util.FailureType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -24,14 +23,18 @@ class CharactersScreenVM @Inject constructor(
     private val _uiState = MutableStateFlow(CharactersScreenState())
     val uiState: StateFlow<CharactersScreenState> = _uiState.asStateFlow()
 
-    private val _uiEvent = MutableSharedFlow<String>()
-    val uiEvent: SharedFlow<String> = _uiEvent
+    private val _errorDialogEvent = MutableSharedFlow<Unit>()
+    val errorDialogEvent: SharedFlow<Unit> = _errorDialogEvent
 
     private var fetchJob: Job? = null
 
-    fun onSearchClicked(name: String) {
-        _uiState.update { it.copy(searchTerm = name) }
-        fetchCharacters(name)
+    fun handleAction(action: CharacterScreenAction) {
+        when (action) {
+            is CharacterScreenAction.Search -> {
+                _uiState.update { it.copy(searchTerm = action.name) }
+                fetchCharacters(_uiState.value.searchTerm)
+            }
+        }
     }
 
     private fun fetchCharacters(name: String) {
@@ -40,15 +43,14 @@ class CharactersScreenVM @Inject constructor(
         fetchJob = viewModelScope.launch {
             _uiState.update {
                 it.copy(
-                    status = CharactersScreenState.CharactersStatus.Loading,
-                    displayMessage = ""
+                    status = CharactersScreenState.CharactersStatus.Loading
                 )
             }
 
             when (val result = searchCharactersByNameUC(name)) {
 
-                is SearchCharactersByNameResult.Success -> {
-                    val characters = result.charactersModel.map {
+                is UCResult.Success -> {
+                    val characters = result.data.map {
                         CharactersScreenState.CharactersStatus.Character.fromModel(it)
                     }
 
@@ -58,22 +60,17 @@ class CharactersScreenVM @Inject constructor(
                                 CharactersScreenState.CharactersStatus.Empty
                             } else {
                                 CharactersScreenState.CharactersStatus.Success(characters)
-                            },
-                            displayMessage = ""
+                            }
                         )
                     }
                 }
 
-                is SearchCharactersByNameResult.Failure -> {
-                    if (result.failureType == FailureType.SqlError
-                        || result.failureType == FailureType.Error
-                    ) {
-                        _uiEvent.emit("Something went wrong.")
-                        _uiState.update {
-                            it.copy(
-                                status = CharactersScreenState.CharactersStatus.Empty,
-                            )
-                        }
+                is UCResult.Failure -> {
+                    _errorDialogEvent.emit(Unit)
+                    _uiState.update {
+                        it.copy(
+                            status = CharactersScreenState.CharactersStatus.Empty,
+                        )
                     }
                 }
             }

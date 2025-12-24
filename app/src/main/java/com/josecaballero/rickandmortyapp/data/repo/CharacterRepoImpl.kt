@@ -1,8 +1,10 @@
 package com.josecaballero.rickandmortyapp.data.repo
 
+import android.util.Log
 import com.josecaballero.rickandmortyapp.data.source.remote.rest.RickAndMortyAPI
 import com.josecaballero.rickandmortyapp.data.repo.data.CharacterData
 import com.josecaballero.rickandmortyapp.data.source.local.sql.dao.CharacterDao
+import com.josecaballero.rickandmortyapp.data.source.local.sql.entity.CharacterEntity
 import com.josecaballero.rickandmortyapp.data.transformer.CharacterTransformer
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -13,25 +15,50 @@ class CharacterRepoImpl @Inject constructor(
     private val characterDao: CharacterDao
 ) : CharacterRepo {
 
+    private val TAG = this::class.simpleName
+
     override suspend fun getCharactersByName(name: String): Result<List<CharacterData>> {
-        return try {
+        var networkException: Exception? = null
+        var sqlException: Exception? = null
+
+        try {
             val characterResponse = api.getCharactersByName(name)
-            val newCharacterEntities = characterResponse.results.map(CharacterTransformer::toEntity)
+            val entities = characterResponse.results.map(CharacterTransformer::toEntity)
 
             withContext(Dispatchers.IO) {
-                characterDao.insertCharacters(newCharacterEntities)
+                characterDao.insertCharacters(entities)
+            }
+        } catch (e: Exception) {
+            networkException = e
+            Log.i(TAG, e.message ?: "")
+        }
+
+        var localCharacters = emptyList<CharacterEntity>()
+        try {
+            localCharacters = withContext(Dispatchers.IO) {
+                characterDao.getCharactersByName(name)
+            }
+        } catch (e: Exception) {
+            sqlException = e
+            Log.i(TAG, e.message ?: "")
+        }
+
+        return when {
+            localCharacters.isNotEmpty() -> {
+                Result.success(localCharacters.map(CharacterTransformer::toData))
             }
 
-            val charactersData = newCharacterEntities.map(CharacterTransformer::toData)
-            Result.success(charactersData)
+            networkException != null -> {
+                Result.failure(networkException)
+            }
 
-        } catch (e: Exception) {
-            val localCharacters = characterDao.getCharactersByName(name)
+            sqlException != null -> {
+                Result.failure(sqlException)
+            }
 
-            if (localCharacters.isNotEmpty()) {
-                Result.success(localCharacters.map(CharacterTransformer::toData))
-            } else {
-                Result.failure(e)
+            else -> {
+                // Or a Failure? It's up to Product/UI Flow
+                Result.success(emptyList())
             }
         }
     }

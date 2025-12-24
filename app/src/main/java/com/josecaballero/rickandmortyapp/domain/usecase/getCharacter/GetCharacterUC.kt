@@ -2,7 +2,8 @@ package com.josecaballero.rickandmortyapp.domain.usecase.getCharacter
 
 import com.josecaballero.rickandmortyapp.data.repo.CharacterRepo
 import com.josecaballero.rickandmortyapp.domain.model.CharacterModel
-import com.josecaballero.rickandmortyapp.domain.util.FailureType
+import com.josecaballero.rickandmortyapp.domain.model.UCResult
+import com.josecaballero.rickandmortyapp.domain.util.DomainFailure
 import com.josecaballero.rickandmortyapp.domain.util.ThrowableMapper
 import com.josecaballero.rickandmortyapp.domain.util.TimeFormatter
 import javax.inject.Inject
@@ -10,13 +11,13 @@ import javax.inject.Inject
 class GetCharacterUC @Inject constructor(
     private val repository: CharacterRepo
 ) {
-    suspend operator fun invoke(id: Int): GetCharacterResult {
+    suspend operator fun invoke(id: Int): UCResult<CharacterModel> {
         val repoResult = repository.getCharactersById(id)
 
         return repoResult.fold(
             onSuccess = { data ->
                 if (data == null) {
-                    return GetCharacterResult.Failure(FailureType.NotFound)
+                    return UCResult.Failure(DomainFailure.NotFound)
                 }
                 val created = TimeFormatter.formatToStandardDate(data.created)
                 val model = CharacterModel(
@@ -30,11 +31,11 @@ class GetCharacterUC @Inject constructor(
                     created = created
                 )
 
-                GetCharacterResult.Success(model)
+                UCResult.Success(model)
             },
             onFailure = { throwable ->
                 val failureType = ThrowableMapper.getFailureType(throwable)
-                GetCharacterResult.Failure(failureType)
+                UCResult.Failure(failureType)
             }
         )
     }

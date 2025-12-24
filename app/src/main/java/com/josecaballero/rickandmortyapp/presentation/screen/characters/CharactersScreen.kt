@@ -51,8 +51,8 @@ fun CharactersScreen(
     var dialogMessage by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
-        viewModel.uiEvent.collect { message ->
-            dialogMessage = message
+        viewModel.errorDialogEvent.collect { message ->
+            dialogMessage = "Something went wrong!"
             showMessageDialog = true
         }
     }
@@ -62,7 +62,9 @@ fun CharactersScreen(
             SearchInput(
                 searchTerm = state.searchTerm,
                 onSearchTermChange = { newTerm ->
-                    viewModel.onSearchClicked(newTerm)
+                    viewModel.handleAction(
+                        CharacterScreenAction.Search(newTerm)
+                    )
                 }
             )
         }
@@ -73,14 +75,6 @@ fun CharactersScreen(
                 .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
-
-            Text(
-                text = state.displayMessage,
-                color = MaterialTheme.colorScheme.error,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(24.dp)
-            )
-
             when (val currentStatus = state.status) {
                 CharactersScreenState.CharactersStatus.Initial -> {
                     Text(

@@ -18,11 +18,11 @@ import org.junit.Assert.*
 import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CharacterRepoImplTest {
+class CharacterRepoTest {
 
     private val api: RickAndMortyAPI = mockk()
     private val dao: CharacterDao = mockk()
-    private lateinit var repo: CharacterRepoImpl
+    private lateinit var repo: CharacterRepo
 
     private val dispatcher = StandardTestDispatcher()
 

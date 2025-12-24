@@ -2,7 +2,7 @@ package com.josecaballero.rickandmortyapp.domain.usecase.searchCharactersByName
 
 import com.josecaballero.rickandmortyapp.data.repo.CharacterRepo
 import com.josecaballero.rickandmortyapp.domain.model.CharacterModel
-import com.josecaballero.rickandmortyapp.domain.util.FailureType
+import com.josecaballero.rickandmortyapp.domain.model.UCResult
 import com.josecaballero.rickandmortyapp.domain.util.ThrowableMapper
 import com.josecaballero.rickandmortyapp.domain.util.TimeFormatter
 import javax.inject.Inject
@@ -10,10 +10,10 @@ import javax.inject.Inject
 class SearchCharactersByNameUC @Inject constructor(
     private val repository: CharacterRepo
 ) {
-    suspend operator fun invoke(characterName: String): SearchCharactersByNameResult {
+    suspend operator fun invoke(characterName: String): UCResult<List<CharacterModel>> {
 
         if (characterName.isBlank()) {
-            return SearchCharactersByNameResult.Success(emptyList())
+            return UCResult.Success(emptyList())
         }
 
         val repoResult = repository.getCharactersByName(characterName)
@@ -35,12 +35,12 @@ class SearchCharactersByNameUC @Inject constructor(
                         )
                     }
                 }
-                SearchCharactersByNameResult.Success(models)
+                UCResult.Success(models)
             },
 
             onFailure = { throwable ->
                 val failureType = ThrowableMapper.getFailureType(throwable)
-                SearchCharactersByNameResult.Failure(failureType)
+                UCResult.Failure(failureType)
             }
         )
     }

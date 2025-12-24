@@ -8,28 +8,28 @@ import java.net.ConnectException
 
 class ThrowableMapper {
     companion object {
-        fun getFailureType(throwable: Throwable): FailureType {
+        fun getFailureType(throwable: Throwable): DomainFailure {
             return when (throwable) {
                 // Ktor IO/Connection Failures
                 is HttpRequestTimeoutException,
                 is ConnectException -> {
-                    FailureType.NetworkError
+                    DomainFailure.NetworkError
                 }
 
                 // Ktor HTTP Status Failures
                 is ClientRequestException,
                 is ServerResponseException -> {
-                    FailureType.NetworkError
+                    DomainFailure.NetworkError
                 }
 
                 // Room/Database Exceptions
                 is SQLiteException -> {
-                    FailureType.SqlError
+                    DomainFailure.SqlError
                 }
 
                 // Others
                 else -> {
-                    FailureType.Error
+                    DomainFailure.Error
                 }
             }
         }
